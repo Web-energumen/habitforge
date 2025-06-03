@@ -31,7 +31,7 @@ class AuthTests(APITestCase):
             'password': self.test_user_data['password'],
         }
 
-        response = self.client.post(self.token_url, self.test_user_data, format='json')
+        response = self.client.post(self.token_url, login_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.json())
         self.assertIn('refresh', response.json())
@@ -47,7 +47,7 @@ class AuthTests(APITestCase):
             'username': self.test_user_data['username'],
             'password': self.test_user_data['password'],
         }
-        token_response = self.client.post(self.token_url, self.test_user_data, format='json')
+        token_response = self.client.post(self.token_url, login_data, format='json')
         access_token = token_response.json()['access']
 
         protected_url = reverse('habit-list')
