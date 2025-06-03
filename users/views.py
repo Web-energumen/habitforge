@@ -17,6 +17,6 @@ class RegisterView(generics.CreateAPIView):
         refresh = RefreshToken.for_user(user)
         return Response({
             'user': serializer.data,
-            'access_token': str(refresh.access_token),
+            'access': str(refresh.access_token),
             'refresh': str(refresh),
         }, status=status.HTTP_201_CREATED)
