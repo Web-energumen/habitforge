@@ -1,3 +1,4 @@
+from datetime import date
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
@@ -111,3 +112,42 @@ class HabitScheduleAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
+class HabitRecordAPITestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='user', password='pass1234')
+        self.token_url = reverse('token_obtain_pair')
+
+        self.habit = Habit.objects.create(user=self.user, name='Meditate')
+
+        self.record_data = {
+            'date': str(date.today()),
+            'completed': True,
+        }
+
+    def authenticate(self):
+        response = self.client.post(self.token_url, {'username': 'user', 'password': 'pass1234'}, format='json')
+        token = response.json()['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+
+    def test_create_record(self):
+        self.authenticate()
+        url = reverse('habit-records-list', args=[self.habit.id])
+        response = self.client.post(url, self.record_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json()['completed'], self.record_data['completed'])
+
+    def test_list_records(self):
+        self.authenticate()
+        HabitRecord.objects.create(habit=self.habit, date=date.today(), completed=True)
+        url = reverse('habit-records-list', args=[self.habit.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()), 1)
+
+    def test_cannot_create_record_for_other_users_habit(self):
+        other_user = User.objects.create_user(username='other', password='pass5678')
+        other_habit = Habit.objects.create(user=other_user, name='Read')
+        self.authenticate()
+        url = reverse('habit-records-list', args=[other_habit.id])
+        response = self.client.post(url, self.record_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
