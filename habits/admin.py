@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Habit, HabitSchedule, HabitRecord
+
+from .models import Habit, HabitRecord, HabitSchedule
 
 
 class HabitScheduleInline(admin.TabularInline):
