@@ -1,10 +1,13 @@
 from datetime import date
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django_celery_beat.models import CrontabSchedule, PeriodicTask
 from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APIClient, APITestCase
 
-from habits.models import Habit, HabitSchedule, HabitRecord
+from habits.models import Habit, HabitRecord, HabitSchedule
+from habits.utils import create_or_update_task_for_schedule
 
 User = get_user_model()
 
@@ -151,3 +154,86 @@ class HabitRecordAPITestCase(APITestCase):
         url = reverse('habit-records-list', args=[other_habit.id])
         response = self.client.post(url, self.record_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class HabitScheduleAPITest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.login(username='testuser', password='testpass')
+        self.habit = Habit.objects.create(user=self.user, name='Test habit')
+
+    def tearDown(self):
+        PeriodicTask.objects.all().delete()
+
+    def authenticate(self):
+        self.token_url = reverse('token_obtain_pair')
+        response = self.client.post(self.token_url, {'username': 'testuser', 'password': 'testpass'}, format='json')
+        token = response.json().get('access')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+
+    def test_create_habit_schedule_creates_periodictask(self):
+        self.authenticate()
+
+        url = reverse('habit-schedule-list', kwargs={'habit_pk': self.habit.id})
+        data = {
+            'habit': self.habit.id,
+            'day_of_week': 0,
+            'remind_hour': 9,
+            'remind_minute': 0
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        schedule_id = response.data['id']
+        schedule = HabitSchedule.objects.get(id=schedule_id)
+
+        create_or_update_task_for_schedule(schedule)
+
+        task_name = f'remind_habit_{schedule_id}'
+        self.assertTrue(PeriodicTask.objects.filter(name=task_name).exists())
+
+
+    def test_update_habit_schedule_updates_periodictask(self):
+        self.authenticate()
+
+        schedule = HabitSchedule.objects.create(
+            habit=self.habit,
+            day_of_week=2,
+            remind_hour=9,
+            remind_minute=30
+        )
+        create_or_update_task_for_schedule(schedule)
+
+        schedule.remind_hour = 10
+        schedule.remind_minute = 15
+        schedule.save()
+
+        create_or_update_task_for_schedule(schedule)
+
+        task_name = f'remind_habit_{schedule.id}'
+        task = PeriodicTask.objects.get(name=task_name)
+        crontab = task.crontab
+
+        self.assertEqual(task.task, 'habits.task.send_habit_email')
+        self.assertEqual(crontab.hour, str(10))
+        self.assertEqual(crontab.minute, str(15))
+
+    def test_delete_habit_schedule_deletes_periodictask(self):
+        self.authenticate()
+
+        schedule = HabitSchedule.objects.create(
+            habit=self.habit,
+            day_of_week=0,
+            remind_hour=7,
+            remind_minute=0
+        )
+        create_or_update_task_for_schedule(schedule)
+
+        task_name = f'remind_habit_{schedule.id}'
+        self.assertTrue(PeriodicTask.objects.filter(name=task_name).exists())
+
+        url = reverse('habit-schedule-detail', kwargs={'habit_pk': self.habit.id, 'pk': schedule.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertFalse(PeriodicTask.objects.filter(name=task_name).exists())

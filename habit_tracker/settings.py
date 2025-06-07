@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -28,7 +29,7 @@ SECRET_KEY = 'django-insecure-7mdf9hvxm&pk0d3_yg9k)h^vcqzy!2_b1)x2t_t3gh+-v7m=pb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -42,6 +43,8 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_celery_beat',
+    'django_extensions',
 
     'habits',
 ]
@@ -129,7 +132,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Django Rest Framework
+# Django REST Framework
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -138,4 +141,35 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ]
+}
+
+# Celery
+
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+# Sending emails
+
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Simple JWT
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }

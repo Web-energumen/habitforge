@@ -1,6 +1,7 @@
+from datetime import date
+
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.utils import timezone
 
 User = get_user_model()
 
@@ -15,7 +16,7 @@ class Habit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='habits')
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    start_date = models.DateField(default=timezone.now)
+    start_date = models.DateField(default=date.today)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -41,12 +42,14 @@ class HabitSchedule(models.Model):
 
     habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name='schedule')
     day_of_week = models.IntegerField(choices=DAYS_OF_WEEK)
+    remind_hour = models.PositiveSmallIntegerField(default=9)
+    remind_minute = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         unique_together = ('habit', 'day_of_week')
 
     def __str__(self):
-        return f'{self.habit.name} — {self.get_day_of_week_display()}'
+        return f'{self.habit.name} — {self.get_day_of_week_display()} ({self.remind_hour:02}:{self.remind_minute:02})'
 
 
 class HabitRecord(models.Model):

@@ -4,6 +4,7 @@ from .models import Habit, HabitRecord, HabitSchedule
 
 
 class HabitSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(read_only=True, format='%d-%m-%Y %H:%M:%S')
     class Meta:
         model = Habit
         fields = '__all__'
