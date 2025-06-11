@@ -17,12 +17,22 @@ class AuthTests(APITestCase):
             'password': 'strongpassword123'
         }
 
+        self.user = User.objects.create_user(**self.test_user_data)
+        self.user.is_active = True
+        self.user.save()
+
     def test_register_user(self):
-        response = self.client.post(self.register_url, self.test_user_data, format='json')
+        test_data = {
+            'username': 'testuser1',
+            'email': 'testuser1@example.com',
+            'password': 'strongpassword1231'
+        }
+
+        response = self.client.post(self.register_url, test_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn('access', response.json())
         self.assertIn('refresh', response.json())
-        self.assertEqual(response.json()['user']['username'], self.test_user_data['username'])
+        self.assertEqual(response.json()['user']['username'], test_data['username'])
 
     def test_user_login(self):
         self.client.post(self.register_url, self.test_user_data, format='json')
