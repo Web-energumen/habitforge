@@ -17,32 +17,55 @@ jobs:
       POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-    - name: Copy .env file
-      run: cp .env.example .env
+      - name: Copy .env file
+        run: cp .env.example .env
 
-    - name: Build and start containers
-      run: docker compose up -d --build
+      - name: Build and start containers
+        run: docker compose up -d --build
 
-    - name: Wait for DB to be ready
-      run: |
-        echo "Waiting for web service to become healthy..."
-        timeout 60 bash -c \
-        'until [ "$(docker inspect -f {{.State.Health.Status}} web)" == "healthy" ]; do sleep 2; done'
+      - name: Check container status and logs
+        run: |
+          echo "Waiting 10s for initial startup..."
+          sleep 10
+          echo "Container status:"
+          docker ps -a
+          echo "Database logs:"
+          docker logs habitforge-db-1
 
-    - name: Run migrations
-      run: docker compose exec web python manage.py migrate
+      - name: Wait for DB to be ready
+        run: |
+          echo "Waiting for web service to become healthy..."
+          timeout 90 bash -c \
+          'until [ "$(docker inspect -f {{.State.Health.Status}} habitforge-db-1)" == "healthy" ]; do 
+            echo "Waiting for database to become healthy..."; 
+            docker logs habitforge-db-1 --tail 20;
+            sleep 5; 
+          done'
 
-    - name: Run tests
-      run: docker compose exec web python manage.py test
+      - name: Wait for web service
+        run: |
+          echo "Waiting for web service to become healthy..."
+          timeout 60 bash -c \
+          'until [ "$(docker inspect -f {{.State.Health.Status}} habitforge-web-1)" == "healthy" ]; do 
+            echo "Waiting for web service to become healthy...";
+            docker logs habitforge-web-1 --tail 20;
+            sleep 5;
+          done'
 
-    - name: Shut down
-      if: always()
-      run: docker compose down
+      - name: Run migrations
+        run: docker compose exec -T web python manage.py migrate
+
+      - name: Run tests
+        run: docker compose exec -T web python manage.py test
+
+      - name: Shut down
+        if: always()
+        run: docker compose down -v
