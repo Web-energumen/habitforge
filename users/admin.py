@@ -6,12 +6,12 @@ User = get_user_model()
 
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'is_staff', 'is_active', 'date_joined')
+    list_display = ("username", "email", "is_staff", "is_active", "date_joined")
 
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    list_filter = ("is_staff", "is_superuser", "is_active", "groups")
 
-    search_fields = ('username', 'email')
-    ordering = ('username',)
+    search_fields = ("username", "email")
+    ordering = ("username",)
 
 
 admin.site.unregister(User)

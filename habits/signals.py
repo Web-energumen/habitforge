@@ -13,5 +13,5 @@ def habit_schedule_save(sender, instance, **kwargs):
 
 @receiver(post_delete, sender=HabitSchedule)
 def habit_schedule_delete(sender, instance, **kwargs):
-    task_name = f'remind_habit_{instance.id}'
+    task_name = f"remind_habit_{instance.id}"
     PeriodicTask.objects.filter(name=task_name).delete()

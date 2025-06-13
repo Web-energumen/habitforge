@@ -5,18 +5,18 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('habits', '0003_habit_is_active_habit_start_date_alter_habit_user_and_more'),
+        ("habits", "0003_habit_is_active_habit_start_date_alter_habit_user_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='habitschedule',
-            name='remind_hour',
+            model_name="habitschedule",
+            name="remind_hour",
             field=models.PositiveSmallIntegerField(default=9),
         ),
         migrations.AddField(
-            model_name='habitschedule',
-            name='remind_minute',
+            model_name="habitschedule",
+            name="remind_minute",
             field=models.PositiveSmallIntegerField(default=0),
         ),
     ]

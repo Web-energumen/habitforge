@@ -9,9 +9,10 @@ class IsOwner(permissions.BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
 
-        if view.action == 'create':
-            habit_id = request.parser_context['kwargs'].get('habit_pk')
+        if view.action == "create":
+            habit_id = request.parser_context["kwargs"].get("habit_pk")
             from habits.models import Habit
+
             try:
                 habit = Habit.objects.get(id=habit_id)
             except Habit.DoesNotExist:

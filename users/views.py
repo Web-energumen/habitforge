@@ -27,12 +27,15 @@ class RegisterView(generics.CreateAPIView):
         send_email_verification.delay(user.email, verification_path)
 
         refresh = RefreshToken.for_user(user)
-        return Response({
-            'user': serializer.data,
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'detail': 'Перевірте email для підтвердження реєстрації.'
-        }, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                "user": serializer.data,
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "detail": "Перевірте email для підтвердження реєстрації.",
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class VerifyEmailView(views.APIView):
@@ -44,15 +47,12 @@ class VerifyEmailView(views.APIView):
             user = User.objects.get(pk=uid)
 
             if not default_token_generator.check_token(user, token):
-                return Response({'detail': 'Невірний токен.'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "Невірний токен."}, status=status.HTTP_400_BAD_REQUEST)
 
             user.is_active = True
             user.save()
 
-            return Response({'detail': 'Обліковий запис успішно активовано.'},
-                            status=status.HTTP_200_OK)
+            return Response({"detail": "Обліковий запис успішно активовано."}, status=status.HTTP_200_OK)
 
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            return Response({'detail': 'Користувача не знайдено.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Користувача не знайдено."}, status=status.HTTP_400_BAD_REQUEST)

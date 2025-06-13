@@ -2,8 +2,7 @@ from rest_framework import permissions, viewsets
 
 from .models import Habit, HabitRecord, HabitSchedule
 from .permissions import IsOwner
-from .serializers import (HabitRecordSerializer, HabitScheduleSerializer,
-                          HabitSerializer)
+from .serializers import HabitRecordSerializer, HabitScheduleSerializer, HabitSerializer
 
 
 class HabitViewSet(viewsets.ModelViewSet):
@@ -22,7 +21,7 @@ class HabitRelatedViewSet(viewsets.ModelViewSet):
     permission_classes = [IsOwner]
 
     def get_habit(self):
-        habit_id = self.kwargs['habit_pk']
+        habit_id = self.kwargs["habit_pk"]
         return Habit.objects.get(id=habit_id, user=self.request.user)
 
 

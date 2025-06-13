@@ -16,8 +16,8 @@ def send_habit_email(user_id, habit_id):
         return False
 
     send_mail(
-        subject='Habit Tracker: Нагадування про звичку',
-        message=f'Привіт {user.username}, не забудь виконати звичку: {habit.name}',
+        subject="Habit Tracker: Нагадування про звичку",
+        message=f"Привіт {user.username}, не забудь виконати звичку: {habit.name}",
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=[user.email],
         fail_silently=False,

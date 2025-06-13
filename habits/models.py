@@ -13,7 +13,7 @@ class Habit(models.Model):
     start_date, is_active, created_at
     """
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='habits')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="habits")
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     start_date = models.DateField(default=date.today)
@@ -21,7 +21,7 @@ class Habit(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.name} ({self.user.username})'
+        return f"{self.name} ({self.user.username})"
 
 
 class HabitSchedule(models.Model):
@@ -31,25 +31,25 @@ class HabitSchedule(models.Model):
     """
 
     DAYS_OF_WEEK = [
-        (0, 'Понеділок'),
-        (1, 'Вівторок'),
-        (2, 'Середа'),
-        (3, 'Четвер'),
-        (4, 'П\'ятниця'),
-        (5, 'Субота'),
-        (6, 'Неділя'),
+        (0, "Понеділок"),
+        (1, "Вівторок"),
+        (2, "Середа"),
+        (3, "Четвер"),
+        (4, "П'ятниця"),
+        (5, "Субота"),
+        (6, "Неділя"),
     ]
 
-    habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name='schedule')
+    habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name="schedule")
     day_of_week = models.IntegerField(choices=DAYS_OF_WEEK)
     remind_hour = models.PositiveSmallIntegerField(default=9)
     remind_minute = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
-        unique_together = ('habit', 'day_of_week')
+        unique_together = ("habit", "day_of_week")
 
     def __str__(self):
-        return f'{self.habit.name} — {self.get_day_of_week_display()} ({self.remind_hour:02}:{self.remind_minute:02})'
+        return f"{self.habit.name} — {self.get_day_of_week_display()} ({self.remind_hour:02}:{self.remind_minute:02})"
 
 
 class HabitRecord(models.Model):
@@ -58,13 +58,13 @@ class HabitRecord(models.Model):
     when exactly it was completed.
     """
 
-    habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name='records')
+    habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name="records")
     date = models.DateField()
     completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        unique_together = ('habit', 'date')
+        unique_together = ("habit", "date")
 
     def __str__(self):
         return f'{self.habit.name} — {self.date} — {"Готово" if self.completed else "Не завершено"}'
