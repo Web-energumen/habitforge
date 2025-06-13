@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('habits', '0003_habit_is_active_habit_start_date_alter_habit_user_and_more'),
     ]

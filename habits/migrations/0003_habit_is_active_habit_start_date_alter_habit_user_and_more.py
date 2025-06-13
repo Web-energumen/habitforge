@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('habits', '0002_rename_habits_habit'),
@@ -27,14 +26,18 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='habit',
             name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='habits', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='habits',
+                                    to=settings.AUTH_USER_MODEL),
         ),
         migrations.CreateModel(
             name='HabitSchedule',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('day_of_week', models.IntegerField(choices=[(0, 'Понеділок'), (1, 'Вівторок'), (2, 'Середа'), (3, 'Четвер'), (4, "П'ятниця"), (5, 'Субота'), (6, 'Неділя')])),
-                ('habit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='schedule', to='habits.habit')),
+                ('day_of_week', models.IntegerField(choices=[(0, 'Понеділок'), (1, 'Вівторок'), (2, 'Середа'),
+                                                             (3, 'Четвер'), (4, "П'ятниця"), (5, 'Субота'),
+                                                             (6, 'Неділя')])),
+                ('habit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='schedule',
+                                            to='habits.habit')),
             ],
             options={
                 'unique_together': {('habit', 'day_of_week')},
@@ -47,7 +50,8 @@ class Migration(migrations.Migration):
                 ('date', models.DateField()),
                 ('completed', models.BooleanField(default=False)),
                 ('completed_at', models.DateTimeField(blank=True, null=True)),
-                ('habit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='records', to='habits.habit')),
+                ('habit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='records',
+                                            to='habits.habit')),
             ],
             options={
                 'unique_together': {('habit', 'date')},

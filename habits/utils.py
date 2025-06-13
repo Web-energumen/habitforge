@@ -18,8 +18,8 @@ def create_or_update_task_for_schedule(habit_schedule):
     schedule, _ = CrontabSchedule.objects.get_or_create(
         minute=str(minute),
         hour=str(hour),
-        day_of_week=day_of_week, # тільки в потрібний день тижня
-        day_of_month='*',        # тільки в потрібний день тижня# у будь-який день місяця
+        day_of_week=day_of_week,   # тільки в потрібний день тижня
+        day_of_month='*',          # тільки в потрібний день тижня# у будь-який день місяця
         month_of_year='*',         # у будь-який місяць
         timezone=settings.TIME_ZONE,
     )

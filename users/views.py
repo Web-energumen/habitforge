@@ -53,6 +53,6 @@ class VerifyEmailView(views.APIView):
             return Response({'detail': 'Обліковий запис успішно активовано.'},
                             status=status.HTTP_200_OK)
 
-        except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return Response({'detail': 'Користувача не знайдено.'},
                             status=status.HTTP_400_BAD_REQUEST)

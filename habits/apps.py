@@ -6,4 +6,4 @@ class HabitsConfig(AppConfig):
     name = 'habits'
 
     def ready(self):
-        import habits.signals
+        import habits.signals  # noqa: F401

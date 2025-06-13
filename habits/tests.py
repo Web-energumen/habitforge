@@ -2,7 +2,7 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django_celery_beat.models import CrontabSchedule, PeriodicTask
+from django_celery_beat.models import PeriodicTask
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -34,7 +34,7 @@ class HabitAPITestCase(APITestCase):
         response = self.client.post(self.token_url, {'username': username, 'password': password}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         token = response.json()['access']
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}' )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
 
     def test_get_own_habits(self):
         self.authenticate_user(self.user1.username, self.user1_password)
@@ -191,7 +191,6 @@ class HabitScheduleAPITest(APITestCase):
 
         task_name = f'remind_habit_{schedule_id}'
         self.assertTrue(PeriodicTask.objects.filter(name=task_name).exists())
-
 
     def test_update_habit_schedule_updates_periodictask(self):
         self.authenticate()
