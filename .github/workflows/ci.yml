@@ -1,0 +1,48 @@
+name: Django CI with Docker Compose
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Copy .env file
+      run: cp .env.example .env
+
+    - name: Build and start containers
+      run: docker-compose up -d --build
+
+    - name: Wait for DB to be ready
+      run: |
+        echo "Waiting for web service to become healthy..."
+        timeout 60 bash -c \
+        'until [ "$(docker inspect -f {{.State.Health.Status}} web)" == "healthy" ]; do sleep 2; done'
+
+    - name: Run migrations
+      run: docker-compose exec web python manage.py migrate
+
+    - name: Run tests
+      run: docker-compose exec web python manage.py test
+
+    - name: Shut down
+      if: always()
+      run: docker-compose down
