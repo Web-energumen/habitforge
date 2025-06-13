@@ -1,4 +1,4 @@
-name: Django CI with Docker Compose
+name: Django CI
 
 on:
   push:
@@ -7,65 +7,60 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-    env:
-      DJANGO_SETTINGS_MODULE: config.settings
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: 3.11
 
-      - name: Copy .env file
-        run: cp .env.example .env
-
-      - name: Build and start containers
-        run: docker compose up -d --build
-
-      - name: Check container status and logs
+      - name: Create .env file from GitHub Secrets
         run: |
-          echo "Waiting 10s for initial startup..."
-          sleep 10
-          echo "Container status:"
-          docker ps -a
-          echo "Database logs:"
-          docker logs habitforge-db-1
+          echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> .env
+          echo "DEBUG=False" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env
+          echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
 
-      - name: Wait for DB to be ready
-        run: |
-          echo "Waiting for web service to become healthy..."
-          timeout 90 bash -c \
-          'until [ "$(docker inspect -f {{.State.Health.Status}} habitforge-db-1)" == "healthy" ]; do 
-            echo "Waiting for database to become healthy..."; 
-            docker logs habitforge-db-1 --tail 20;
-            sleep 5; 
-          done'
+      - name: Build Docker containers
+        run: docker compose build
 
-      - name: Wait for web service
+      - name: Start Docker containers
+        run: docker compose up -d
+
+      - name: Wait for web service to become healthy
         run: |
           echo "Waiting for web service to become healthy..."
           timeout 60 bash -c \
-          'until [ "$(docker inspect -f {{.State.Health.Status}} habitforge-web-1)" == "healthy" ]; do 
-            echo "Waiting for web service to become healthy...";
-            docker logs habitforge-web-1 --tail 20;
-            sleep 5;
+          'until [ "$(docker compose ps -q web | xargs docker inspect -f "{{.State.Health.Status}}")" == "healthy" ]; do 
+            sleep 5
+            echo "Still waiting..."
           done'
 
-      - name: Run migrations
+      - name: Apply migrations
         run: docker compose exec -T web python manage.py migrate
 
       - name: Run tests
         run: docker compose exec -T web python manage.py test
 
-      - name: Shut down
+      - name: Lint with flake8
+        run: docker compose exec -T web flake8 .
+
+      - name: Check formatting with black
+        run: docker compose exec -T web black . --check
+
+      - name: Check import order with isort
+        run: docker compose exec -T web isort . --check
+
+      - name: Shut down Docker containers
         if: always()
-        run: docker compose down -v
+        run: docker compose down

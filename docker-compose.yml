@@ -11,8 +11,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"
- ]
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -53,7 +52,7 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8000/ || exit 1" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/admin/login/" ]
       interval: 10s
       timeout: 5s
       retries: 5
