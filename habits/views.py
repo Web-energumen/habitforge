@@ -1,5 +1,14 @@
-from rest_framework import permissions, viewsets
+from datetime import timedelta
 
+from django.db.models import Count
+from django.utils.timezone import now
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions, views, viewsets
+from rest_framework.response import Response
+from rest_framework.generics import GenericAPIView
+
+
+from .filters import HabitRecordFilter, HabitAnalyticsFilter
 from .models import Habit, HabitRecord, HabitSchedule
 from .permissions import IsOwner
 from .serializers import HabitRecordSerializer, HabitScheduleSerializer, HabitSerializer
@@ -40,6 +49,8 @@ class HabitScheduleViewSet(HabitRelatedViewSet):
 class HabitRecordViewSet(HabitRelatedViewSet):
     serializer_class = HabitRecordSerializer
     permission_classes = [IsOwner]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = HabitRecordFilter
 
     def get_queryset(self):
         habit = self.get_habit()
@@ -48,3 +59,25 @@ class HabitRecordViewSet(HabitRelatedViewSet):
     def perform_create(self, serializer):
         habit = self.get_habit()
         serializer.save(habit=habit)
+
+
+class HabitAnalyticsView(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = HabitAnalyticsFilter
+    queryset = HabitRecord.objects.filter(completed=True)
+
+    def get(self, request, habit_pk=None):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if habit_pk:
+            queryset = queryset.filter(habit_id=habit_pk, habit__user=request.user)
+
+        analytics = (
+            queryset
+            .values("date")
+            .annotate(completed_count=Count("id"))
+            .order_by("date")
+        )
+
+        return Response(analytics)
