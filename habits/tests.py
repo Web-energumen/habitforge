@@ -223,18 +223,18 @@ class HabitScheduleAPITest(APITestCase):
 
 class HabitAnalyticsViewTest(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='password')
-        self.client.login(username='testuser', password='password')
+        self.user = User.objects.create_user(username="testuser", password="password")
+        self.client.login(username="testuser", password="password")
 
-        self.habit = Habit.objects.create(name='Test Habit', user=self.user)
+        self.habit = Habit.objects.create(name="Test Habit", user=self.user)
 
         today = date.today()
         HabitRecord.objects.create(habit=self.habit, date=today, completed=True)
         HabitRecord.objects.create(habit=self.habit, date=today - timedelta(days=1), completed=True)
         HabitRecord.objects.create(habit=self.habit, date=today - timedelta(days=2), completed=False)  # не считается
 
-        self.other_user = User.objects.create_user(username='otheruser', password='password')
-        self.other_habit = Habit.objects.create(name='Other Habit', user=self.other_user)
+        self.other_user = User.objects.create_user(username="otheruser", password="password")
+        self.other_habit = Habit.objects.create(name="Other Habit", user=self.other_user)
         HabitRecord.objects.create(habit=self.other_habit, date=today, completed=True)
 
     def authenticate(self, username, password):
@@ -244,40 +244,40 @@ class HabitAnalyticsViewTest(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
 
     def test_analytics_basic(self):
-        self.authenticate(self.user.username, 'password')
+        self.authenticate(self.user.username, "password")
 
-        url = reverse('habit-analytics', kwargs={'habit_pk': self.habit.pk})
+        url = reverse("habit-analytics", kwargs={"habit_pk": self.habit.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        dates = [item['date'] for item in response.data]
+        dates = [item["date"] for item in response.data]
         self.assertIn(date.today(), dates)
         self.assertIn(date.today() - timedelta(days=1), dates)
         self.assertNotIn(date.today() - timedelta(days=2), dates)
 
         for item in response.data:
-            self.assertEqual(item['completed_count'], 1)
+            self.assertEqual(item["completed_count"], 1)
 
     def test_analytics_filter_by_date(self):
-        self.authenticate(self.user.username, 'password')
-        url = reverse('habit-analytics', kwargs={'habit_pk': self.habit.pk})
+        self.authenticate(self.user.username, "password")
+        url = reverse("habit-analytics", kwargs={"habit_pk": self.habit.pk})
 
         start_date = date.today() - timedelta(days=1)
-        response = self.client.get(url, {'start_date': start_date})
+        response = self.client.get(url, {"start_date": start_date})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         for item in response.data:
-            self.assertGreaterEqual(item['date'], start_date)
+            self.assertGreaterEqual(item["date"], start_date)
 
         end_date = date.today() - timedelta(days=1)
-        response = self.client.get(url, {'end_date': end_date})
+        response = self.client.get(url, {"end_date": end_date})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         for item in response.data:
-            self.assertLessEqual(item['date'], end_date)
+            self.assertLessEqual(item["date"], end_date)
 
     def test_analytics_reject_other_habit(self):
-        self.authenticate(self.user.username, 'password')
+        self.authenticate(self.user.username, "password")
 
-        url = reverse('habit-analytics', kwargs={'habit_pk': self.other_habit.pk})
+        url = reverse("habit-analytics", kwargs={"habit_pk": self.other_habit.pk})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)

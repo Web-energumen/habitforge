@@ -69,11 +69,6 @@ class HabitAnalyticsView(GenericAPIView):
         if habit_pk:
             queryset = queryset.filter(habit_id=habit_pk, habit__user=request.user)
 
-        analytics = (
-            queryset
-            .values("date")
-            .annotate(completed_count=Count("id"))
-            .order_by("date")
-        )
+        analytics = queryset.values("date").annotate(completed_count=Count("id")).order_by("date")
 
         return Response(analytics)
