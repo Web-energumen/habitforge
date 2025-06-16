@@ -1,14 +1,10 @@
-from datetime import timedelta
-
 from django.db.models import Count
-from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions, views, viewsets
-from rest_framework.response import Response
+from rest_framework import permissions, viewsets
 from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
 
-
-from .filters import HabitRecordFilter, HabitAnalyticsFilter
+from .filters import HabitAnalyticsFilter, HabitRecordFilter
 from .models import Habit, HabitRecord, HabitSchedule
 from .permissions import IsOwner
 from .serializers import HabitRecordSerializer, HabitScheduleSerializer, HabitSerializer

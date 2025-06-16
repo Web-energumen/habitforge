@@ -1,6 +1,4 @@
-from datetime import date
-from django.utils.timezone import now
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -263,7 +261,6 @@ class HabitAnalyticsViewTest(APITestCase):
     def test_analytics_filter_by_date(self):
         self.authenticate(self.user.username, 'password')
         url = reverse('habit-analytics', kwargs={'habit_pk': self.habit.pk})
-
 
         start_date = date.today() - timedelta(days=1)
         response = self.client.get(url, {'start_date': start_date})
